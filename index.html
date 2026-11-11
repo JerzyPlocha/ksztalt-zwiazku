@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kształt związku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* layout: lewa kolumna to panel suwaków (przyklejony), prawa to okno wyniku czytane z góry na dół */
+  --bg: #f1f4f3;
+  --surface: #ffffff;
+  --ink: #16211f;
+  --muted: #586764;
+  --line: #d3dbd9;
+  --me: #0e6f6a;
+  --her: #8a3f7d;
+  --warn: #9a6200;
+  --warn-bg: #fbf1dc;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --surface: #182120; --ink: #e5ecea; --muted: #9babA8;
+    --line: #2c3836; --me: #53c7be; --her: #d993cd; --warn: #e3ad52; --warn-bg: #2b2414;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #182120; --ink: #e5ecea; --muted: #9baba8;
+  --line: #2c3836; --me: #53c7be; --her: #d993cd; --warn: #e3ad52; --warn-bg: #2b2414;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+header h1 {
+  font-family: var(--font-display); font-weight: 700; font-size: 34px;
+  line-height: 1.1; margin: 0 0 6px; text-wrap: balance;
+}
+header p { margin: 0; color: var(--muted); max-width: 65ch; }
+.grid { display: grid; grid-template-columns: 400px 1fr; gap: 24px; margin-top: 24px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.panel, .card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+}
+.panel { padding: 16px; position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+@media (max-width: 900px) { .panel { position: static; max-height: none; } }
+.who { display: flex; gap: 6px; margin-bottom: 8px; }
+.who button {
+  flex: 1; font: 600 14px var(--font-body); padding: 8px 10px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--muted);
+}
+.who button[aria-pressed="true"][data-who="me"] { background: var(--me); border-color: var(--me); color: var(--surface); }
+.who button[aria-pressed="true"][data-who="now"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+body[data-who="now"] .dim input[type=range] { accent-color: var(--muted); }
+.who button[aria-pressed="true"][data-who="her"] { background: var(--her); border-color: var(--her); color: var(--surface); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.hint { font-size: 13px; color: var(--muted); margin: 0 0 12px; min-height: 2.9em; }
+.group-title {
+  font: 600 12px var(--font-body); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); margin: 14px 0 6px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+.group-title:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+.dim { padding: 8px 0; }
+.dim-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.dim-head label { font-weight: 600; }
+.dim-val { font-size: 13px; color: var(--muted); text-align: right; }
+.dim input[type=range] { width: 100%; margin: 6px 0 2px; accent-color: var(--me); cursor: pointer; }
+body[data-who="her"] .dim input[type=range] { accent-color: var(--her); }
+.poles { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); gap: 12px; }
+.poles span:last-child { text-align: right; }
+.result { display: grid; gap: 16px; }
+.card { padding: 18px; }
+.card h2 { font-family: var(--font-display); font-weight: 700; font-size: 19px; margin: 0 0 10px; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.shape-row { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 18px; align-items: center; }
+@media (max-width: 640px) { .shape-row { grid-template-columns: 1fr; } }
+svg { max-width: 100%; height: auto; display: block; }
+.ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.axis { stroke: var(--line); stroke-width: 1; }
+.axis-label { font: 500 11px var(--font-body); fill: var(--muted); }
+.poly-me { fill: var(--me); fill-opacity: .18; stroke: var(--me); stroke-width: 2; }
+.poly-her { fill: var(--her); fill-opacity: .14; stroke: var(--her); stroke-width: 2; stroke-dasharray: 5 4; }
+.dot-me { fill: var(--me); } .dot-her { fill: var(--her); }
+.shape-name { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.15; margin: 0 0 4px; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin: 8px 0 14px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 3px solid var(--me); vertical-align: middle; margin-right: 6px; }
+.legend i.her { border-top: 3px dashed var(--her); }
+.meter { margin-top: 12px; }
+.meter-head { display: flex; justify-content: space-between; font-size: 13px; }
+.meter-head b { font-weight: 600; }
+.meter-head span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+.bar div { height: 100%; background: var(--me); border-radius: 99px; }
+.meter small { color: var(--muted); font-size: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font: 600 12px var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 0 10px 8px 0; }
+td { vertical-align: top; padding: 10px 10px 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+td:first-child { width: 22%; }
+td b { display: block; font-weight: 600; }
+td .pos { font-size: 12px; color: var(--muted); }
+@media (max-width: 640px) {
+  thead { display: none; }
+  tr { display: block; border-top: 1px solid var(--line); padding: 10px 0; }
+  td { display: block; border: 0; padding: 2px 0; width: auto !important; }
+  td[data-k]::before { content: attr(data-k) ": "; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+}
+ul.flat { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.flat .recipe { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+ul.flat li { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; }
+li.tension { background: var(--warn-bg); border-color: transparent; border-left: 4px solid var(--warn); }
+.pill { display: inline-block; font: 600 11px var(--font-body); letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; margin-right: 8px; border: 1px solid var(--line); color: var(--muted); }
+.pill.talk { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.pill.struct { background: var(--her); color: var(--surface); border-color: transparent; }
+.own { display: inline-block; font: 600 11px var(--font-body); letter-spacing: .03em; padding: 1px 7px; border-radius: 99px; margin-top: 3px; border: 1px solid var(--line); color: var(--muted); }
+.own-solo { background: var(--me); color: var(--surface); border-color: transparent; }
+.own-semi { border-color: var(--me); color: var(--me); }
+.ticks { display: flex; justify-content: space-between; padding: 0 5px; height: 8px; }
+.ticks i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.ticks i.hot { background: var(--warn); width: 8px; height: 8px; margin: -1px; }
+.clash { margin: 4px 0 0; font-size: 12px; color: var(--warn); background: var(--warn-bg); padding: 4px 8px; border-radius: 6px; }
+ol.order { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 14px; }
+ol.order .pos { color: var(--muted); font-size: 13px; }
+ol.order .recipe { display: block; font-size: 13px; color: var(--muted); }
+.preview-bar { background: var(--warn-bg); border-left: 4px solid var(--warn); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; }
+.preview-bar p { margin: 0 0 8px; }
+.preview-bar button, .peek { font: 600 13px var(--font-body); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); cursor: pointer; }
+.peek { display: block; margin-top: 8px; border-color: var(--line); }
+.peek:hover, .preview-bar button:hover { border-color: var(--me); color: var(--me); }
+.dim.key { border-left: 3px solid var(--me); padding-left: 10px; margin-left: -13px; }
+.poly-ghost { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.dot-ghost { fill: var(--muted); }
+.legend i.ghost { border-top: 2px dashed var(--muted); }
+.range { display: flex; justify-content: space-between; margin: 2px 0 4px; }
+.range[hidden] { display: none; }
+.range i { width: 18%; height: 6px; border-radius: 3px; border: 1px solid var(--line); background: transparent; }
+.range i.in { background: var(--me); border-color: var(--me); }
+#preview-out { font-weight: 600; color: var(--warn); }
+details.help { margin-top: 6px; }
+details.help summary { cursor: pointer; font: 600 13px var(--font-body); color: var(--me); width: fit-content; }
+.help-body { display: grid; gap: 6px; margin-top: 8px; }
+.help-ask { margin: 0; font-weight: 600; font-size: 14px; }
+.help-rule { margin: 0; font-size: 12px; color: var(--muted); }
+.answer { text-align: left; font: 400 13px/1.4 var(--font-body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.answer b { display: block; font-weight: 600; font-size: 12px; color: var(--muted); }
+.answer:hover { border-color: var(--me); }
+.answer.on { border: 2px solid var(--me); background: var(--surface); }
+.answer.on b { color: var(--me); }
+.poly-me, .poly-her { fill-opacity: 0; stroke-width: 1.5; }
+.poly-me.active, .poly-her.active { fill-opacity: .18; stroke-width: 3; }
+.poly-ghost.active { fill: var(--muted); fill-opacity: .15; stroke-width: 3; }
+#radar svg { cursor: pointer; }
+#radar-marker { fill: none; stroke: var(--ink); stroke-width: 2; pointer-events: none; }
+.radar-hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.5em; text-align: center; }
+.dim.unanswered .dim-val { color: var(--warn); font-weight: 600; }
+.dim.unanswered input[type=range] { opacity: .45; }
+.confirm { font: 600 12px var(--font-body); margin-top: 6px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--warn); background: var(--warn-bg); color: var(--warn); cursor: pointer; }
+.incomplete { margin: 8px 0 0; font-size: 13px; color: var(--warn); background: var(--warn-bg); padding: 6px 10px; border-radius: 6px; }
+.sector-weave { fill: var(--me); fill-opacity: .08; }
+.sector-exit { fill: var(--warn); fill-opacity: .11; }
+.sector-legend { justify-content: center; margin: 6px 0 0; }
+.legend i.area { border-top: 0; width: 14px; height: 10px; border-radius: 2px; }
+.legend i.area.weave { background: var(--me); opacity: .3; }
+.legend i.area.exit { background: var(--warn); opacity: .4; }
+.own-hard { border-color: var(--warn); color: var(--warn); }
+.reset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.reset-row button { flex: 1; font: 600 13px var(--font-body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; }
+.reset-row button:hover { border-color: var(--warn); color: var(--warn); }
+.reset-row button[data-armed] { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
+.budget-verdict { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0 0 10px; }
+.budget-verdict.over { color: var(--warn); }
+.stack { position: relative; display: flex; height: 26px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--bg); }
+.stack div { height: 100%; min-width: 0; }
+.stack .free { background: repeating-linear-gradient(135deg, var(--surface) 0 6px, var(--line) 6px 8px); }
+.stack .limit { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
+.budget-list { list-style: none; margin: 12px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 18px; font-size: 14px; }
+.budget-list li { display: flex; align-items: center; gap: 8px; }
+.budget-list i { width: 12px; height: 12px; border-radius: 3px; flex: none; border: 1px solid var(--line); }
+.budget-list span { flex: 1; }
+.budget-list b { font-weight: 600; font-variant-numeric: tabular-nums; }
+#shapes li.active { border: 2px solid var(--me); }
+#shapes .recipe { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pill.now { background: var(--me); color: var(--surface); border-color: transparent; }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+footer { margin-top: 20px; }
+</style>
+</head>
+<body data-who="me">
+<div class="page">
+  <header>
+    <h1>Kształt związku</h1>
+    <p>Jeden suwak na jedną większą decyzję. Po prawej widzisz, co dana konfiguracja daje, kosztem czego i jakiego warunku wymaga. To opis kompromisów, a nie prognoza.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-label="Suwaki">
+      <div class="who" role="group" aria-label="Czyj profil ustawiasz">
+        <button type="button" id="who-me" data-who="me" aria-pressed="true">Jak chcę</button>
+        <button type="button" id="who-now" data-who="now" aria-pressed="false">Jak jest teraz</button>
+        <button type="button" id="who-her" data-who="her" aria-pressed="false">Druga strona</button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div class="preview-bar" id="preview-bar" hidden>
+        <p><b>Podgląd: <span id="preview-name"></span></b>. To jedna z wielu konfiguracji dających ten kształt, dobrana przykładowo. Wyróżnione suwaki go definiują. Pasek pod każdym suwakiem pokazuje pozycje, które przy obecnych ustawieniach reszty mieszczą się w modelu. Twoje ustawienia są zachowane.</p>
+        <p id="preview-out" hidden></p>
+        <button type="button" id="preview-stop">Wróć do moich ustawień</button>
+      </div>
+      <div id="dims"></div>
+      <div class="reset-row">
+        <button type="button" id="reset-active">Wyczyść ten profil</button>
+        <button type="button" id="reset-all">Wyczyść wszystko</button>
+      </div>
+    </section>
+
+    <section class="result" aria-label="Wynik" aria-live="polite">
+      <div class="card">
+        <div class="shape-row">
+          <div>
+            <div id="radar"></div>
+            <p class="radar-hint" id="radar-hint">Kliknij w wykres, żeby ustawić wartość w aktywnym profilu.</p>
+            <div class="legend sector-legend"><span><i class="area weave"></i>Obszar splecenia codzienności</span><span><i class="area exit"></i>Obszar trudności odwrotu</span></div>
+          </div>
+          <div>
+            <p class="note">Ta konfiguracja tworzy</p>
+            <p class="shape-name" id="shape-name"></p>
+            <p class="note" id="shape-desc"></p>
+            <p class="incomplete" id="incomplete" hidden></p>
+            <div class="legend" id="legend"></div>
+            <div id="meters"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Jak jest a jak chcę</h2>
+        <div id="drift"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="budget-title">Budżet tygodnia</h2>
+        <p class="budget-verdict" id="budget-verdict"></p>
+        <div class="stack" id="budget-bar" role="img" aria-label="Podział 168 godzin tygodnia"></div>
+        <ul class="budget-list" id="budget-list"></ul>
+        <p class="note">Założenia do szacunku: sen 8 godzin na dobę, codzienność (posiłki, dom, dojazdy) 3 godziny dziennie, małe dziecko to około 30 godzin opieki tygodniowo na rodzica. Godziny przypisane suwakom to przybliżenia, nie pomiar.</p>
+      </div>
+
+      <div class="card">
+        <h2>Mapa kształtów</h2>
+        <p class="note" style="margin-bottom:10px">Dziewięć nazwanych konfiguracji. To moje etykiety porządkujące, a nie typologia z badań. Żaden kształt nie jest lepszy od innych.</p>
+        <ul class="flat" id="shapes"></ul>
+      </div>
+
+      <div class="card" id="gaps-card">
+        <h2>Różnice między wami</h2>
+        <div id="gaps"></div>
+      </div>
+
+      <div class="card">
+        <h2>Napięcia między wyborami</h2>
+        <div id="tensions"></div>
+      </div>
+
+      <div class="card">
+        <h2>Kolejność decyzji</h2>
+        <p class="note" style="margin-bottom:10px">Od najłatwiej do najtrudniej odwracalnej. Te z góry możesz testować i korygować. Te z dołu warto podejmować na końcu i wprost, bo zawężają wszystko nad nimi. Kolejność to heurystyka, nie wynik badań.</p>
+        <ol class="order" id="order"></ol>
+      </div>
+
+      <div class="card">
+        <h2 id="bill-title">Rachunek tej konfiguracji</h2>
+        <table>
+          <thead><tr><th>Wymiar</th><th>Zyskujesz</th><th>Kosztem</th><th>Warunek</th></tr></thead>
+          <tbody id="bill"></tbody>
+        </table>
+      </div>
+
+      <footer>
+        <p class="note" id="version" style="margin-bottom:8px"><b>Wersja 12</b> z 10.11.2026</p>
+        <p class="note">Skąd to pochodzi: opisy zysków, kosztów i warunków to heurystyki z literatury o związkach, nie wyniki pomiaru. Dwa wskaźniki to proste średnie z pozycji suwaków. Uwaga o wspólnym mieszkaniu opiera się na teorii inercji Stanleya i Rhoades. Tego, co najmocniej wiąże się z jakością związku (responsywność, docenianie, naprawa po konflikcie), nie da się ustawić suwakiem.</p>
+      </footer>
+    </section>
+  </div>
+</div>
+
+<script>
+const DIMS = [
+  { id: "czas", name: "Czas razem", short: "Czas", group: "B",
+    labels: ["Głównie osobno", "Więcej osobno", "Pół na pół", "Więcej razem", "Prawie wszystko razem"],
+    low: ["Własne pasje, przyjaźnie i regeneracja zostają nienaruszone.", "Mniej wspólnych doświadczeń. Więź łatwo dryfuje w stronę współlokatorstwa.", "Chroniony, regularny czas tylko we dwoje, którego nic nie wypiera."],
+    mid: ["Bliskość i własne życie mieszczą się obok siebie.", "Ciągłe uzgadnianie kalendarza.", "Jasność, które wieczory są wspólne, a które własne."],
+    high: ["Dużo wspólnych doświadczeń i szybkie budowanie poczucia my.", "Zanikają osobne przyjaźnie i pasje. Rośnie ryzyko zmęczenia sobą.", "Każde z was utrzymuje przynajmniej jedną własną przestrzeń."] },
+  { id: "mieszkanie", name: "Wspólne mieszkanie", short: "Mieszkanie", group: "B",
+    labels: ["Osobne mieszkania", "Osobno, częste nocowanie", "Na dwa domy", "Razem, z własnym kątem", "Jedno wspólne mieszkanie"],
+    low: ["Pełna przestrzeń własna i łatwy odwrót.", "Podwójne koszty i logistyka. Codzienność partnera znasz słabiej.", "Zgoda co do tego, czy to etap, czy model docelowy."],
+    mid: ["Poznajecie wspólną codzienność bez palenia mostów.", "Życie na walizkach. Nikt nie jest do końca u siebie.", "Umówiona data powrotu do tej decyzji."],
+    high: ["Wspólna codzienność, niższe koszty, pełna wiedza o tym, jak się razem żyje.", "Rozstanie robi się trudne niezależnie od dopasowania. Mniej samotności.", "Decyzja podjęta wprost przez oboje, a nie wynikła z wygody."] },
+  { id: "finanse", name: "Finanse", short: "Finanse", group: "B",
+    labels: ["Całkowicie osobne", "Osobne plus zrzutka", "Wspólne konto na życie", "Większość wspólna", "Wszystko wspólne"],
+    low: ["Niezależność i brak rozliczania się z wydatków.", "Przy różnicy dochodów szybko rodzi się poczucie niesprawiedliwości.", "Jasna zasada podziału wspólnych kosztów."],
+    mid: ["Wspólne cele finansowane razem, własne pieniądze bez tłumaczenia się.", "Trzeba ustalić proporcje i granicę tego, co wspólne.", "Reguła wpłat, po równo albo proporcjonalnie, wypowiedziana na głos."],
+    high: ["Jeden zespół i proste planowanie dużych celów.", "Każdy wydatek staje się wspólną sprawą. Trudniej się rozdzielić.", "Pełna jawność i podobny stosunek do ryzyka i oszczędzania."] },
+  { id: "role", name: "Obowiązki i role", short: "Role", group: "B",
+    labels: ["Wyraźna specjalizacja", "Raczej specjalizacja", "Według kompetencji", "Raczej po równo", "Ściśle po równo"],
+    low: ["Sprawność: każde robi to, w czym jest dobre.", "Zależność od siebie. Niewidoczna praca jednej strony znika z rachunku.", "Obie strony uznają podział za uczciwy, nie tylko wygodny."],
+    mid: ["Elastyczność bez liczenia punktów.", "Zadania niczyje spadają na bardziej sumienną osobę.", "Każde zadanie ma właściciela."],
+    high: ["Poczucie sprawiedliwości i wymienność.", "Księgowanie wkładu i mniejsza sprawność.", "Podobne standardy porządku i tolerancja dla cudzego sposobu."] },
+  { id: "rodziny", name: "Rodziny pochodzenia", short: "Rodziny", group: "B",
+    labels: ["Wyraźne granice", "Raczej dystans", "Regularny kontakt", "Bliska obecność", "Pełna integracja"],
+    low: ["Para decyduje sama. Mniej nacisków z zewnątrz.", "Mniej wsparcia, szczególnie przy dzieciach. Możliwy żal rodzin.", "Każde samo stawia granice własnej rodzinie."],
+    mid: ["Wsparcie bez utraty prywatności.", "Święta i wizyty wymagają negocjacji.", "Wspólne stanowisko wobec rodzin, ustalane przed, a nie w trakcie."],
+    high: ["Sieć wsparcia i poczucie przynależności.", "Rodziny współdecydują. Pojawiają się konflikty lojalności.", "W sporze partner ma pierwszeństwo przed rodziną."] },
+  { id: "znajomi", name: "Życie towarzyskie", short: "Znajomi", group: "B",
+    labels: ["Osobne kręgi", "Głównie osobne", "Część wspólna", "Głównie wspólne", "Jeden wspólny krąg"],
+    low: ["Każde ma własny świat i własne oparcie.", "Partner słabo zna ludzi, którzy są dla ciebie ważni.", "Partner jest mile widziany, nawet jeśli nie zawsze obecny."],
+    mid: ["Wspólni znajomi plus własne przyjaźnie.", "Czas dzielony między kręgi.", "Zgoda, że osobne wyjścia nie są sygnałem dystansu."],
+    high: ["Wspólna historia i łatwa logistyka.", "Brak własnego oparcia. W kryzysie znajomi wybierają strony.", "Przynajmniej jedna przyjaźń tylko twoja."] },
+  { id: "praca", name: "Praca i ambicja", short: "Praca", group: "B",
+    labels: ["Kariera na pierwszym miejscu", "Kariera z przewagą", "Równowaga", "Związek z przewagą", "Związek na pierwszym miejscu"],
+    low: ["Rozwój, dochód i energia z osiągnięć.", "Związek dostaje resztki uwagi. Zmęczenie wraca do domu.", "Okresy intensywne mają koniec i są zapowiedziane."],
+    mid: ["Oba obszary rosną.", "W żadnym nie idziesz na maksimum.", "Uzgodnione, co ustępuje, gdy terminy się zderzą."],
+    high: ["Czas i uwaga dla relacji i rodziny.", "Wolniejsza kariera, niższy dochód, możliwy żal po latach.", "Wybór własny, a nie poświęcenie, za które wystawia się rachunek."] },
+  { id: "styl", name: "Stabilność i przygoda", short: "Styl życia", group: "B",
+    labels: ["Rutyna i spokój", "Raczej stabilnie", "Stała baza, regularne nowości", "Raczej zmiana", "Ciągła zmiana"],
+    low: ["Przewidywalność, regeneracja, bezpieczeństwo.", "Nuda. Związek przestaje dostarczać nowych doświadczeń.", "Świadomie dodawane nowe wspólne doświadczenia."],
+    mid: ["Bezpieczna baza i regularny dopływ nowości.", "Nowości trzeba planować, same się nie zdarzą.", "Ktoś faktycznie inicjuje nowe rzeczy."],
+    high: ["Dużo wspólnych nowych doświadczeń i żywość.", "Zmęczenie i koszty. Trudniej o dzieci i oszczędności.", "Stała baza, do której się wraca."] },
+  { id: "dzieci", name: "Dzieci", short: "Dzieci", group: "A",
+    labels: ["Bez dzieci", "Raczej nie", "Decyzja otwarta", "Tak, za kilka lat", "Tak, wkrótce"],
+    low: ["Czas, pieniądze i swoboda zostają dla pary i własnych planów.", "Decyzja z czasem nieodwracalna. Możliwy żal jednej strony.", "Oboje chcecie tego samego, a nie jedno ustępuje."],
+    mid: ["Czas na poznanie się bez presji.", "Niepewność. Biologia skraca okno decyzji.", "Termin, do którego decyzja zapada."],
+    high: ["Rodzina i wspólny sens na dekady.", "Najmniej odwracalna decyzja. Mniej czasu, snu i pieniędzy dla pary.", "Podział opieki i pracy uzgodniony, zanim pojawi się dziecko."] },
+  { id: "miejsce", name: "Miasto i mobilność", short: "Miasto", group: "A",
+    labels: ["Jedno miasto na stałe", "Raczej tutaj", "Tutaj, z otwartością", "Gotowość do przeprowadzki", "Życie mobilne"],
+    low: ["Korzenie, sieć ludzi, stabilność dla dzieci.", "Zamknięte opcje zawodowe i życiowe gdzie indziej.", "To miejsce jest dobre dla obojga, nie tylko dla jednego."],
+    mid: ["Korzenie dziś, opcje otwarte jutro.", "Trudniej inwestować w miejsce, na przykład kupić mieszkanie.", "Wiadomo, jaka okazja uruchamia rozmowę o przeprowadzce."],
+    high: ["Szersze opcje pracy i życia.", "Słabsza sieć wsparcia. Jedno zwykle płaci karierą.", "Jasność, czyja praca prowadzi i jak to się wyrównuje."] },
+  { id: "slub", name: "Formalne zobowiązanie", short: "Ślub", group: "A",
+    labels: ["Bez ślubu", "Raczej bez", "Kiedyś, bez terminu", "W ciągu kilku lat", "Wkrótce"],
+    low: ["Związek trwa z wyboru, nie z formy.", "Słabsza ochrona prawna. Partner może to czytać jako brak pewności.", "Zaangażowanie okazywane inaczej i czytelnie dla partnera."],
+    mid: ["Brak presji.", "Niejasność może się ciągnąć latami.", "Oboje tak samo rozumiecie słowo kiedyś."],
+    high: ["Czytelny sygnał zaangażowania i ochrona prawna.", "Trudniejszy odwrót. Decyzja przed pełnym poznaniem się.", "Znacie się w stresie i w konflikcie, nie tylko w dobrych chwilach."] }
+];
+
+// Kolejność osi na wykresie (zgodnie z ruchem wskazówek zegara, od góry). Ułożona tak, żeby wymiary
+// wchodzące do tego samego wskaźnika leżały obok siebie.
+const AXIS_ORDER = ["czas", "mieszkanie", "finanse", "slub", "dzieci", "miejsce", "praca", "styl", "role", "znajomi", "rodziny"];
+DIMS.sort((first, second) => AXIS_ORDER.indexOf(first.id) - AXIS_ORDER.indexOf(second.id));
+
+// Wymiary składające się na oba wskaźniki, w kolejności sąsiadowania na wykresie.
+const WEAVE_DIMENSION_IDS = ["znajomi", "rodziny", "czas", "mieszkanie", "finanse"];
+const EXIT_DIMENSION_IDS = ["mieszkanie", "finanse", "slub", "dzieci"];
+
+const PANEL_GROUPS = [
+  { title: "Wspólna codzienność", dimensionIds: ["czas", "znajomi", "rodziny"] },
+  { title: "Wspólna baza i zobowiązania", dimensionIds: ["mieszkanie", "finanse", "slub", "dzieci"] },
+  { title: "Kierunek i styl", dimensionIds: ["miejsce", "praca", "styl", "role"] }
+];
+
+const GROUPS = {
+  B: "Do zaprojektowania razem (odwracalne)",
+  A: "Do odkrycia i uzgodnienia (trudno odwracalne)"
+};
+
+const TENSIONS = [
+  [v => v.czas >= 4 && v.praca <= 2, "Dużo czasu razem i kariera na pierwszym miejscu konkurują o te same godziny. Jedno z nich ustąpi w praktyce, niezależnie od deklaracji."],
+  [v => v.mieszkanie >= 4 && v.slub <= 3, "Wspólne mieszkanie bez uzgodnionej przyszłości to mechanizm inercji: rozstanie drożeje szybciej, niż rośnie pewność. Warto, żeby zamieszkanie było decyzją, a nie skutkiem wygody."],
+  [v => v.dzieci >= 4 && v.styl >= 4, "Dzieci i życie pełne zmian ciągną w przeciwne strony. Małe dziecko wymusza rutynę na kilka lat."],
+  [v => v.dzieci >= 4 && v.praca <= 2, "Dzieci przy karierze na pierwszym miejscu oznaczają, że ktoś odda czas. Jeśli nie ustalicie kto, zdecyduje domyślność."],
+  [v => v.dzieci >= 4 && v.rodziny <= 2, "Dzieci przy wyraźnych granicach wobec rodzin to mniej pomocy w opiece. Trzeba ją zastąpić pieniędzmi albo własnym czasem."],
+  [v => v.dzieci >= 4 && v.miejsce >= 4, "Dzieci i mobilność: każda przeprowadzka zrywa sieć wsparcia, a później szkołę i przyjaźnie dziecka."],
+  [v => v.finanse >= 4 && v.mieszkanie <= 2, "Wspólne pieniądze przy osobnych mieszkaniach to rzadkie połączenie. Sprawdź, czy finanse nie wyprzedzają reszty życia."],
+  [v => v.role <= 2 && v.finanse <= 2, "Specjalizacja ról przy osobnych finansach: osoba, która bierze więcej pracy domowej, traci finansowo i nikt tego nie wyrównuje."],
+  [v => v.czas <= 2 && v.znajomi <= 2 && v.mieszkanie <= 2, "Osobny czas, osobne kręgi i osobne mieszkania naraz: mało punktów styku. Więź potrzebuje wtedy mocnych, chronionych rytuałów."],
+  [v => v.czas >= 4 && v.znajomi >= 4 && v.mieszkanie >= 4, "Wspólny czas, wspólny krąg i wspólne mieszkanie naraz: prawie nie zostaje przestrzeni własnej. Sprawdź, skąd każde z was czerpie energię poza związkiem."],
+  [v => v.slub >= 4 && v.dzieci === 3, "Szybki ślub przy otwartej decyzji o dzieciach: najtrudniejsza różnica może wyjść dopiero po zobowiązaniu."]
+];
+
+// PYTANIA KOTWICZĄCE. Sama treść, bez wyglądu: warstwa wyświetlania tylko czyta ten blok.
+// ask.now pyta o fakt, ask.want o preferencję (używane też w profilu drugiej strony).
+// answers: pięć odpowiedzi, po jednej na punkt skali. Tablica = wspólne brzmienie dla obu trybów.
+// Obiekt { now, want } = dwa brzmienia przy tych samych progach (skale decyzyjne).
+const QUESTIONS = {
+  czas: {
+    ask: { now: "Ile godzin na jawie spędziliście razem w typowym tygodniu z ostatnich czterech?",
+           want: "Ile godzin na jawie chcesz spędzać razem w typowym tygodniu?" },
+    answers: ["Jedno spotkanie w tygodniu, do 8 godzin.",
+              "Dwa spotkania albo jeden pełny dzień, 9 do 15 godzin.",
+              "Trzy do czterech wieczorów albo weekend i jeden wieczór, 16 do 25 godzin.",
+              "Większość wieczorów i cały weekend, 26 do 36 godzin.",
+              "Praktycznie cały wolny czas, ponad 36 godzin."],
+    rule: "Liczy się czas, gdy jesteście w jednym miejscu i nie śpicie, także przy osobnych zajęciach. Przy wahaniu policz godziny z ostatniego zwykłego tygodnia." },
+  mieszkanie: {
+    ask: { now: "Jak mieszkacie dziś? Policz noce pod jednym dachem w typowym tygodniu z ostatnich czterech.",
+           want: "Jak chcesz mieszkać w ciągu najbliższego roku?" },
+    answers: ["Osobne mieszkania, wspólnie 0 do 2 nocy w tygodniu.",
+              "Osobne mieszkania, wspólnie 3 do 4 nocy w tygodniu.",
+              "Osobne mieszkania, wspólnie 5 lub więcej nocy, rzeczy w obu miejscach.",
+              "Jeden wspólny adres, ale każde ma własny pokój albo jedno zachowuje drugie mieszkanie.",
+              "Jeden wspólny adres, bez osobnej przestrzeni i bez drugiego mieszkania."],
+    rule: "Wspólny adres to miejsce, w którym oboje trzymacie większość swoich rzeczy." },
+  finanse: {
+    ask: { now: "Gdzie dziś trafiają wasze dochody i jak płacicie za wspólne wydatki?",
+           want: "Jak chcesz, żeby były ułożone wasze pieniądze?" },
+    answers: ["Każde płaci za siebie, wspólne rachunki dzielone na bieżąco, bez wspólnej puli.",
+              "Osobne konta, a na wspólne wydatki regularna zrzutka albo rozliczenie raz w miesiącu.",
+              "Wspólne konto na życie (mieszkanie, jedzenie, wyjazdy), reszta dochodów osobno.",
+              "Większość dochodów trafia na wspólne konto, każde zostawia sobie stałą kwotę własną.",
+              "Wszystkie dochody i oszczędności wspólne, bez kont osobistych."],
+    rule: "Rozstrzyga to, gdzie trafia pensja, a nie to, kto płaci w restauracji." },
+  role: {
+    ask: { now: "Jak w ostatnich czterech tygodniach dzieliły się między was obowiązki?",
+           want: "Jak chcesz, żeby dzieliły się między was obowiązki?" },
+    answers: ["Stały podział: każde ma własne obszary i nie wykonuje zadań drugiej osoby.",
+              "Głównie stałe obszary, zamiana tylko w wyjątkowych sytuacjach.",
+              "Zadanie bierze ten, kto robi je lepiej albo ma akurat czas, bez liczenia.",
+              "Dążenie do równego udziału, zadania rotują, ale nikt nie liczy ściśle.",
+              "Równo co do czasu: zadania rotują według ustalonej kolejności albo są liczone."],
+    rule: "Jeśli nie mieszkacie razem, oceń wspólne sprawy: planowanie, zakupy, gotowanie, organizację wyjazdów." },
+  rodziny: {
+    ask: { now: "Jak często w ostatnich trzech miesiącach widywaliście się z rodzinami pochodzenia?",
+           want: "Jak często chcesz widywać się z rodzinami pochodzenia?" },
+    answers: ["Kilka razy w roku, rodziny nie znają waszych planów.",
+              "Mniej więcej raz w miesiącu, poza tym okazjonalny telefon.",
+              "Co dwa tygodnie albo co tydzień krótko, rodziny znają wasze plany.",
+              "Co tydzień na kilka godzin, rodziny pomagają w codziennych sprawach.",
+              "Kilka razy w tygodniu albo wspólne mieszkanie, rodziny uczestniczą w waszych decyzjach."],
+    rule: "Rozstrzyga częstotliwość spotkań. Jeśli kontakt z waszymi rodzinami się różni, oceń tę, z którą jest go więcej." },
+  znajomi: {
+    ask: { now: "Jaką część spotkań towarzyskich z ostatnich czterech tygodni odbyliście razem?",
+           want: "Jaką część spotkań towarzyskich chcesz odbywać razem?" },
+    answers: ["Prawie żadnej: mniej niż 1 spotkanie na 10.",
+              "Mniejszość: 1 do 3 spotkań na 10.",
+              "Mniej więcej połowę: 4 do 6 spotkań na 10.",
+              "Większość: 7 do 9 spotkań na 10.",
+              "Prawie wszystkie: osobne spotkanie zdarza się rzadziej niż raz w miesiącu."],
+    rule: "Spotkanie towarzyskie to każde wyjście lub wizyta z osobami spoza was dwojga i waszych rodzin." },
+  praca: {
+    ask: { now: "Ile godzin zajęła ci praca w typowym tygodniu z ostatnich czterech?",
+           want: "Ile godzin tygodniowo chcesz przeznaczać na pracę?" },
+    answers: ["52 godziny lub więcej.",
+              "46 do 51 godzin.",
+              "40 do 45 godzin.",
+              "35 do 39 godzin.",
+              "Mniej niż 35 godzin."],
+    rule: "Wlicz pracę wieczorami i w weekendy oraz naukę i projekty zawodowe po godzinach. Nie wliczaj dojazdów." },
+  styl: {
+    ask: { now: "Jak często w ostatnich trzech miesiącach robiliście razem coś nowego: nowe miejsce, aktywność albo wyjazd?",
+           want: "Jak często chcesz robić razem coś nowego?" },
+    answers: ["Ani razu albo raz: tygodnie wyglądają tak samo.",
+              "Mniej więcej raz w miesiącu.",
+              "Dwa do trzech razy w miesiącu, przy stałym rytmie tygodnia.",
+              "Co tydzień, a do tego wyjazd przynajmniej raz na kwartał.",
+              "Kilka razy w tygodniu albo częste wyjazdy: brak stałego rytmu tygodnia."],
+    rule: "Nowe znaczy: pierwszy raz dla was jako pary." },
+  dzieci: {
+    ask: { now: "Na czym dziś stoi wasza wspólna decyzja o dzieciach?",
+           want: "Czego ty chcesz w sprawie dzieci, niezależnie od tego, co ustaliliście?" },
+    answers: {
+      now: ["Ustaliliśmy wprost, że nie będziemy mieć dzieci.",
+            "Skłaniamy się ku „nie”, bez ostatecznego ustalenia.",
+            "Nie rozmawialiśmy albo rozmowa nie dała odpowiedzi.",
+            "Ustaliliśmy, że tak, starania nie wcześniej niż za 2 lata.",
+            "Ustaliliśmy, że tak, starania w ciągu 2 lat albo już trwają."],
+      want: ["Nie chcę dzieci i nie zmienię zdania, nawet jeśli drugiej osobie zależy.",
+             "Raczej nie chcę, ale rozważę, jeśli drugiej osobie bardzo zależy.",
+             "Nie wiem i nie mam terminu, do którego chcę wiedzieć.",
+             "Chcę dzieci, starania nie wcześniej niż za 2 lata.",
+             "Chcę dzieci, starania w ciągu 2 lat."] },
+    rule: "„Ustaliliśmy” znaczy, że oboje powiedzieliście to na głos. Domysł o tym, czego chce druga osoba, to pozycja środkowa." },
+  miejsce: {
+    ask: { now: "Na czym dziś stoi wasze wspólne ustalenie o miejscu życia?",
+           want: "Gdzie ty chcesz żyć, niezależnie od tego, co ustaliliście?" },
+    answers: {
+      now: ["Ustaliliśmy, że zostajemy w obecnym mieście na stałe.",
+            "Zakładamy, że zostajemy, a przeprowadzka wchodzi w grę tylko z bardzo ważnego powodu.",
+            "Mieszkamy tutaj i nie mamy ustalenia, co dalej.",
+            "Ustaliliśmy, że przeprowadzimy się, jeśli pojawi się dobra okazja.",
+            "Ustaliliśmy, że zmieniamy miejsce co kilka lat albo żyjemy w kilku miejscach naraz."],
+      want: ["Chcę zostać w obecnym mieście na stałe i nie przeprowadzę się.",
+             "Chcę zostać, a przeprowadzkę rozważę tylko z bardzo ważnego powodu.",
+             "Chcę mieszkać tutaj, ale konkretną propozycję przeprowadzki potraktuję poważnie.",
+             "Chcę się przeprowadzić w ciągu 5 lat, jeśli pojawi się dobra okazja.",
+             "Chcę zmieniać miejsce życia co kilka lat albo żyć w kilku miejscach naraz."] },
+    rule: "„Ustaliliśmy” znaczy, że oboje powiedzieliście to na głos." },
+  slub: {
+    ask: { now: "Na czym dziś stoi wasza wspólna decyzja o ślubie?",
+           want: "Czego ty chcesz w sprawie ślubu, niezależnie od tego, co ustaliliście?" },
+    answers: {
+      now: ["Ustaliliśmy wprost, że nie bierzemy ślubu.",
+            "Skłaniamy się ku temu, żeby go nie brać, bez ostatecznego ustalenia.",
+            "Nie rozmawialiśmy albo mówimy o ślubie ogólnie, bez terminu.",
+            "Ustaliliśmy, że tak, nie wcześniej niż za 2 lata.",
+            "Jesteśmy zaręczeni albo ustaliliśmy ślub w ciągu 2 lat."],
+      want: ["Nie chcę ślubu i nie zmienię zdania, nawet jeśli drugiej osobie zależy.",
+             "Raczej nie chcę, ale rozważę, jeśli drugiej osobie bardzo zależy.",
+             "Jestem na tak, ale bez terminu i bez pewności.",
+             "Chcę ślubu, nie wcześniej niż za 2 lata.",
+             "Chcę ślubu w ciągu 2 lat."] },
+    rule: "„Ustaliliśmy” znaczy, że oboje powiedzieliście to na głos." }
+};
+
+// Warstwa wyświetlania pytań. Żeby zmienić formę (okno, kreator, dymek), wystarczy podmienić tę jedną funkcję.
+function renderQuestionHelp(dimension, questionMode, selectedPosition) {
+  const question = QUESTIONS[dimension.id];
+  const answers = Array.isArray(question.answers) ? question.answers : question.answers[questionMode];
+  return `<p class="help-ask">${esc(question.ask[questionMode])}</p>` +
+    answers.map((answer, index) =>
+      `<button type="button" class="answer${selectedPosition === index + 1 ? " on" : ""}" data-dim="${dimension.id}" data-position="${index + 1}" aria-pressed="${selectedPosition === index + 1}"><b>${esc(dimension.labels[index])}</b>${esc(answer)}</button>`
+    ).join("") +
+    `<p class="help-rule">${esc(question.rule)}</p>`;
+}
+
+// Czyja to decyzja: [klasa, etykieta]
+const OWN = {
+  praca: ["solo", "Twoja decyzja"],
+  znajomi: ["semi", "Twoja, z wpływem na drugą stronę"],
+  rodziny: ["semi", "Twoja, z wpływem na drugą stronę"],
+  czas: ["joint", "Wspólna decyzja"], mieszkanie: ["joint", "Wspólna decyzja"], finanse: ["joint", "Wspólna decyzja"],
+  role: ["joint", "Wspólna decyzja"], styl: ["joint", "Wspólna decyzja"], dzieci: ["joint", "Wspólna decyzja"],
+  miejsce: ["joint", "Wspólna decyzja"], slub: ["joint", "Wspólna decyzja"]
+};
+
+// Pary w napięciu: [wymiar A, zakres A, wymiar B, zakres B]. Te same warunki co reguły dwustronne w TENSIONS.
+const PAIRS = [
+  ["czas", [4, 5], "praca", [1, 2]],
+  ["mieszkanie", [4, 5], "slub", [1, 3]],
+  ["dzieci", [4, 5], "styl", [4, 5]],
+  ["dzieci", [4, 5], "praca", [1, 2]],
+  ["dzieci", [4, 5], "rodziny", [1, 2]],
+  ["dzieci", [4, 5], "miejsce", [4, 5]],
+  ["finanse", [4, 5], "mieszkanie", [1, 2]],
+  ["role", [1, 2], "finanse", [1, 2]],
+  ["slub", [4, 5], "dzieci", [3, 3]]
+];
+const within = (x, r) => x >= r[0] && x <= r[1];
+// Z którymi wymiarami koliduje pozycja p suwaka id przy pozostałych ustawieniach v.
+function clashes(v, id, p) {
+  const out = [];
+  for (const [a, ar, b, br] of PAIRS) {
+    if (a === id && within(p, ar) && within(v[b], br)) out.push(b);
+    if (b === id && within(p, br) && within(v[a], ar)) out.push(a);
+  }
+  return out;
+}
+
+// Od najłatwiej do najtrudniej odwracalnej.
+const ORDER = [
+  ["czas", "niewiele. Zmienisz z tygodnia na tydzień."],
+  ["znajomi", "niewiele. Wpływa głównie na to, ile godzin zostaje na czas razem."],
+  ["styl", "budżet pieniędzy i energii. Łatwo skorygować."],
+  ["role", "nawyki. Im dłużej trwa podział, tym trudniej go zmienić, zwłaszcza po dziecku."],
+  ["praca", "czas razem i dochód. Zmiana trwa miesiące, nie dni."],
+  ["rodziny", "oczekiwania rodzin. Granicę łatwiej poluzować, niż zaostrzyć."],
+  ["finanse", "swobodę wydatków i łatwość rozstania."],
+  ["mieszkanie", "łatwość rozstania, przestrzeń własną, często też finanse."],
+  ["miejsce", "pracę obojga, sieć wsparcia, później szkołę dzieci."],
+  ["slub", "odwrót, który staje się kosztowny prawnie i społecznie."],
+  ["dzieci", "prawie wszystko: czas, pieniądze, miejsce, styl życia i role. Nieodwracalne."]
+];
+
+// Kolejność ma znaczenie: wygrywa pierwszy pasujący kształt, od najbardziej szczegółowego.
+const SHAPES = [
+  { name: "Rodzina w centrum", test: (v, w) => v.dzieci >= 4 && w >= 50,
+    desc: "Związek jest fundamentem domu z dziećmi. Para łatwo schodzi na drugi plan, więc potrzebuje własnego, chronionego czasu.",
+    recipe: "dzieci na tak, splecenie od 50 w górę." },
+  { name: "Dwie kariery, jeden dom", test: v => v.praca <= 2 && v.mieszkanie >= 4,
+    desc: "Wspólna baza, z której każde wychodzi do własnych ambicji. Działa, gdy czas dla pary stoi w kalendarzu na równi z pracą.",
+    recipe: "kariera z przewagą, wspólne mieszkanie." },
+  { name: "Wspólna wyprawa", test: v => v.styl >= 4 && v.czas >= 4 && v.dzieci <= 3,
+    desc: "Związek jako źródło nowych doświadczeń. Działa, dopóki oboje mają podobną wytrzymałość na zmianę.",
+    recipe: "raczej zmiana, więcej czasu razem, dzieci na nie albo decyzja otwarta." },
+  { name: "Związek w budowie", test: v => v.dzieci === 3 && v.slub === 3 && v.mieszkanie <= 3,
+    desc: "Najważniejsze decyzje są otwarte. To naturalny stan na początku. Ryzyko pojawia się, gdy otwarte zostaje na lata bez rozmowy.",
+    recipe: "dzieci i ślub w pozycji środkowej, mieszkanie jeszcze nie wspólne." },
+  { name: "Razem na dwa adresy", test: v => v.mieszkanie <= 2 && v.czas >= 3,
+    desc: "Bliskość bez wspólnego dachu. Działa, gdy oboje traktują to jako wybór, a nie poczekalnię.",
+    recipe: "osobne mieszkania, czas co najmniej pół na pół." },
+  { name: "Dwa równoległe życia", test: (v, w) => w < 34,
+    desc: "Każde zachowuje własny świat, a związek jest miejscem spotkania. Działa, gdy spotkania są częste i chronione.",
+    recipe: "splecenie poniżej 34." },
+  { name: "Spokojna przystań", test: (v, w) => v.styl <= 2 && w >= 50,
+    desc: "Związek jako miejsce odpoczynku i przewidywalności. Wymaga świadomie dodawanych nowości, żeby nie zgasł.",
+    recipe: "raczej stabilnie, splecenie od 50 w górę." },
+  { name: "Jedno wspólne życie", test: (v, w) => w >= 67,
+    desc: "Większość obszarów jest wspólna. Działa, gdy każde zachowuje choć jedną przestrzeń tylko dla siebie.",
+    recipe: "splecenie od 67 w górę." },
+  { name: "Bliskość z marginesem", test: () => true,
+    desc: "Wspólny środek i własne obrzeża. Działa, gdy granica między nimi jest nazwana, a nie domyślna.",
+    recipe: "splecenie między 34 a 66, bez mocnego przechyłu w inną stronę." }
+];
+
+// Typowa konfiguracja dla każdego kształtu (ta sama kolejność co SHAPES) i suwaki, które go definiują.
+const DIM_IDS = ["czas", "mieszkanie", "finanse", "role", "rodziny", "znajomi", "praca", "styl", "dzieci", "miejsce", "slub"];
+const PRESETS = [
+  { vals: [4, 5, 4, 3, 4, 3, 4, 2, 5, 1, 4], keys: ["dzieci", "mieszkanie", "czas"] },
+  { vals: [2, 5, 3, 4, 2, 2, 1, 3, 2, 3, 3], keys: ["praca", "mieszkanie"] },
+  { vals: [5, 4, 3, 3, 2, 4, 3, 5, 2, 5, 2], keys: ["styl", "czas", "dzieci"] },
+  { vals: [3, 2, 2, 3, 3, 3, 3, 3, 3, 2, 3], keys: ["dzieci", "slub", "mieszkanie"] },
+  { vals: [4, 1, 2, 3, 3, 3, 3, 3, 2, 2, 2], keys: ["mieszkanie", "czas"] },
+  { vals: [1, 2, 1, 3, 2, 1, 2, 3, 2, 3, 2], keys: ["czas", "mieszkanie", "finanse", "znajomi"] },
+  { vals: [4, 5, 4, 3, 3, 4, 4, 1, 2, 1, 4], keys: ["styl", "czas", "mieszkanie"] },
+  { vals: [5, 5, 5, 4, 4, 5, 3, 3, 3, 2, 4], keys: ["czas", "mieszkanie", "finanse", "znajomi", "rodziny"] },
+  { vals: [3, 4, 3, 3, 3, 3, 3, 3, 2, 2, 3], keys: ["czas", "mieszkanie", "finanse"] }
+];
+function startPreview(i) {
+  state.preview = i;
+  state.previewVals = Object.fromEntries(DIM_IDS.map((id, k) => [id, PRESETS[i].vals[k]]));
+  render();
+  document.getElementById("preview-bar").scrollIntoView({ block: "nearest" });
+}
+function stopPreview() { state.preview = null; state.previewVals = null; render(); }
+
+const DEFAULT_ME = { czas: 3, mieszkanie: 2, finanse: 2, role: 3, rodziny: 3, znajomi: 3, praca: 3, styl: 3, dzieci: 3, miejsce: 2, slub: 3 };
+const state = { who: "me", me: { ...DEFAULT_ME }, her: null, now: null, preview: null, previewVals: null };
+
+try {
+  const saved = JSON.parse(localStorage.getItem("ksztalt-zwiazku") || "null");
+  if (saved && saved.me) { state.me = { ...DEFAULT_ME, ...saved.me }; state.her = saved.her || null; state.now = saved.now || null; }
+} catch (e) {}
+
+function save() {
+  try { localStorage.setItem("ksztalt-zwiazku", JSON.stringify({ schema: 2, me: state.me, her: state.her, now: state.now })); } catch (e) {}
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function band(d, v) { return v <= 2 ? d.low : v === 3 ? d.mid : d.high; }
+function current() { return state.preview !== null ? state.previewVals : state[state.who]; }
+
+const MIDDLE_POSITION = 3;
+// Profil bez odpowiedzi: każda skala ma wartość null, dopóki użytkownik jej nie ustawi.
+function createUnansweredProfile() { return Object.fromEntries(DIMS.map(d => [d.id, null])); }
+// Do obliczeń brakujące skale liczone są jako pozycja środkowa. Wynik jest wtedy oznaczany jako orientacyjny.
+function resolveProfileValues(profile) { return Object.fromEntries(DIMS.map(d => [d.id, profile[d.id] == null ? MIDDLE_POSITION : profile[d.id]])); }
+function countAnsweredScales(profile) { return DIMS.filter(d => profile[d.id] != null).length; }
+
+const RADAR_GEOMETRY = { width: 400, height: 340, centerX: 200, centerY: 170, radius: 112 };
+const RADAR_HINT_DEFAULT = "Kliknij w wykres, żeby ustawić wartość w aktywnym profilu.";
+
+// Współrzędne w układzie wykresu na parę wymiar i pozycja. Zwraca null w martwej strefie i poza wykresem.
+function resolveRadarCoordinates(x, y) {
+  const { centerX, centerY, radius } = RADAR_GEOMETRY;
+  const offsetX = x - centerX, offsetY = y - centerY, distance = Math.hypot(offsetX, offsetY);
+  if (distance < radius / 10 || distance > radius * 1.12) return null;
+  const angleStep = 2 * Math.PI / DIMS.length;
+  const angle = (Math.atan2(offsetY, offsetX) + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
+  const dimension = DIMS[Math.round(angle / angleStep) % DIMS.length];
+  const position = Math.min(5, Math.max(1, Math.round(distance / (radius / 5))));
+  return { dimension, position };
+}
+function resolveRadarTarget(pointerEvent) {
+  const chart = document.querySelector("#radar svg");
+  if (!chart) return null;
+  const point = new DOMPoint(pointerEvent.clientX, pointerEvent.clientY).matrixTransform(chart.getScreenCTM().inverse());
+  return resolveRadarCoordinates(point.x, point.y);
+}
+function describeRadarTarget(target) { return target.dimension.name + ": " + target.dimension.labels[target.position - 1]; }
+function applyRadarSelection(target) {
+  current()[target.dimension.id] = target.position;
+  save(); render();
+  document.getElementById("radar-hint").textContent = "Ustawiono: " + describeRadarTarget(target) + ".";
+}
+function showRadarMarker(target) {
+  const chart = document.querySelector("#radar svg");
+  if (!chart) return;
+  let marker = chart.querySelector("#radar-marker");
+  if (!target) { if (marker) marker.remove(); return; }
+  if (!marker) {
+    marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    marker.id = "radar-marker"; marker.setAttribute("r", "7");
+    chart.appendChild(marker);
+  }
+  const { centerX, centerY, radius } = RADAR_GEOMETRY;
+  const angle = -Math.PI / 2 + DIMS.indexOf(target.dimension) * 2 * Math.PI / DIMS.length;
+  marker.setAttribute("cx", (centerX + radius * target.position / 5 * Math.cos(angle)).toFixed(1));
+  marker.setAttribute("cy", (centerY + radius * target.position / 5 * Math.sin(angle)).toFixed(1));
+}
+
+// Czyszczenie przywraca stan "bez odpowiedzi". Wymaga drugiego kliknięcia, bo nie da się go cofnąć.
+function resetActiveProfile() {
+  state.preview = null; state.previewVals = null;
+  state[state.who] = createUnansweredProfile();
+  save(); render();
+}
+function resetAllProfiles() {
+  state.preview = null; state.previewVals = null;
+  state.me = createUnansweredProfile(); state.now = null; state.her = null;
+  save(); setWho("me");
+}
+function requireSecondClick(button, action) {
+  const originalLabel = button.textContent;
+  let disarmTimer = null;
+  button.addEventListener("click", () => {
+    if (button.dataset.armed) {
+      clearTimeout(disarmTimer);
+      delete button.dataset.armed; button.textContent = originalLabel;
+      action();
+      return;
+    }
+    button.dataset.armed = "true"; button.textContent = "Kliknij ponownie, żeby potwierdzić";
+    disarmTimer = setTimeout(() => { delete button.dataset.armed; button.textContent = originalLabel; }, 4000);
+  });
+}
+
+function buildPanel() {
+  const root = document.getElementById("dims");
+  let html = "";
+  for (const panelGroup of PANEL_GROUPS) {
+    html += `<div class="group-title">${panelGroup.title}</div>`;
+    for (const d of panelGroup.dimensionIds.map(id => DIMS.find(x => x.id === id))) {
+      html += `<div class="dim">
+        <div class="dim-head"><label for="s-${d.id}">${esc(d.name)}</label><span class="dim-val" id="v-${d.id}"></span></div>
+        <span class="own own-${OWN[d.id][0]}">${OWN[d.id][1]}</span>${d.group === "A" ? ` <span class="own own-hard">Trudno odwracalna</span>` : ""}
+        <input type="range" id="s-${d.id}" min="1" max="5" step="1" data-dim="${d.id}">
+        <div class="range" id="r-${d.id}" hidden><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="ticks" id="t-${d.id}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="poles"><span>${esc(d.labels[0])}</span><span>${esc(d.labels[4])}</span></div>
+        <button type="button" class="confirm" id="k-${d.id}" data-dim="${d.id}" hidden>Potwierdź pozycję środkową</button>
+        <p class="clash" id="c-${d.id}" hidden></p>
+        <details class="help"><summary>Pomóż mi wybrać</summary><div class="help-body" id="hb-${d.id}"></div></details>
+      </div>`;
+    }
+  }
+  root.innerHTML = html;
+  root.addEventListener("input", e => {
+    const id = e.target.dataset.dim;
+    if (!id) return;
+    current()[id] = Number(e.target.value);
+    save(); render();
+  });
+}
+
+function setWho(who) {
+  state.who = who;
+  state.preview = null; state.previewVals = null;
+  if (who === "her" && !state.her) { state.her = createUnansweredProfile(); save(); }
+  document.body.dataset.who = who;
+  if (who === "now" && !state.now) { state.now = createUnansweredProfile(); save(); }
+  for (const w of ["me", "now", "her"]) document.getElementById("who-" + w).setAttribute("aria-pressed", String(who === w));
+  render();
+}
+
+function radar() {
+  const { width: W, height: H, centerX: cx, centerY: cy, radius: R } = RADAR_GEOMETRY, n = DIMS.length;
+  const pt = (i, v) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n, r = R * v / 5;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Wykres radarowy pozycji suwaków">`;
+  for (let k = 1; k <= 5; k++) {
+    s += `<polygon class="ring" points="${DIMS.map((_, i) => pt(i, k).map(x => x.toFixed(1)).join(",")).join(" ")}"/>`;
+  }
+  // Obszar obejmuje osie danego wskaźnika i pół kroku po obu stronach.
+  const drawSector = (dimensionIds, styleName) => {
+    const firstIndex = DIMS.findIndex(d => d.id === dimensionIds[0]);
+    const edgeRadius = 5 * Math.cos(Math.PI / n);
+    const outline = [[cx, cy], pt(firstIndex - 0.5, edgeRadius)]
+      .concat(dimensionIds.map((_, offset) => pt(firstIndex + offset, 5)))
+      .concat([pt(firstIndex + dimensionIds.length - 0.5, edgeRadius)]);
+    return `<polygon class="sector-${styleName}" points="${outline.map(point => point.map(x => x.toFixed(1)).join(",")).join(" ")}"/>`;
+  };
+  s += drawSector(WEAVE_DIMENSION_IDS, "weave") + drawSector(EXIT_DIMENSION_IDS, "exit");
+  DIMS.forEach((d, i) => {
+    const [x, y] = pt(i, 5), [lx, ly] = pt(i, 5.75);
+    const c = Math.cos(-Math.PI / 2 + i * 2 * Math.PI / n);
+    const anchor = Math.abs(c) < 0.15 ? "middle" : c > 0 ? "start" : "end";
+    s += `<line class="axis" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    s += `<text class="axis-label" x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}">${esc(d.short)}</text>`;
+  });
+  // Obrys rysowany jest tylko dla profilu z kompletem odpowiedzi. Przy brakach widać same punkty.
+  const drawProfile = (profile, styleName, isActive) => {
+    const answeredPoints = DIMS.map((d, i) => profile[d.id] == null ? null : pt(i, profile[d.id])).filter(Boolean);
+    const outline = answeredPoints.length === DIMS.length
+      ? `<polygon class="poly-${styleName}${isActive ? " active" : ""}" points="${answeredPoints.map(point => point.map(x => x.toFixed(1)).join(",")).join(" ")}"/>` : "";
+    return outline + answeredPoints.map(([x, y]) => `<circle class="dot-${styleName}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isActive ? 4 : 3}"/>`).join("");
+  };
+  if (state.preview !== null) { s += drawProfile(state.me, "ghost", false); s += drawProfile(state.previewVals, "me", true); }
+  else {
+    const layers = [["now", "ghost"], ["her", "her"], ["me", "me"]].filter(([profileKey]) => state[profileKey]);
+    for (const [profileKey, styleName] of layers.filter(([profileKey]) => profileKey !== state.who)) s += drawProfile(state[profileKey], styleName, false);
+    for (const [profileKey, styleName] of layers.filter(([profileKey]) => profileKey === state.who)) s += drawProfile(state[profileKey], styleName, true);
+  }
+  return s + "</svg>";
+}
+
+function pct(vals, weights) {
+  let sum = 0, w = 0;
+  for (const [id, wt] of Object.entries(weights)) { sum += (vals[id] - 1) / 4 * wt; w += wt; }
+  return Math.round(sum / w * 100);
+}
+
+function render() {
+  const raw = current();
+  const v = resolveProfileValues(raw);
+  const previewing = state.preview !== null;
+  const whoLabel = previewing ? "Podgląd: " + SHAPES[state.preview].name : ({ me: "Jak chcę", now: "Jak jest teraz", her: "Profil drugiej strony" })[state.who];
+
+  document.getElementById("hint").textContent = ({
+    me: "Ustaw każdy suwak tam, gdzie naprawdę chcesz być, a nie tam, gdzie wypada.",
+    now: "Ustaw, jak to faktycznie wygląda dziś. Skala bez odpowiedzi nie jest porównywana z tym, czego chcesz.",
+    her: "Te suwaki ustawia druga strona samodzielnie. Zgadywanie jej odpowiedzi daje fałszywy obraz."
+  })[state.who];
+
+  for (const d of DIMS) {
+    document.getElementById("s-" + d.id).value = v[d.id];
+    const unanswered = raw[d.id] == null;
+    document.getElementById("v-" + d.id).textContent = unanswered ? "Bez odpowiedzi" : d.labels[v[d.id] - 1];
+    document.getElementById("s-" + d.id).closest(".dim").classList.toggle("unanswered", unanswered);
+    document.getElementById("k-" + d.id).hidden = !unanswered;
+    const ticks = document.getElementById("t-" + d.id).children;
+    for (let p = 1; p <= 5; p++) ticks[p - 1].className = clashes(v, d.id, p).length ? "hot" : "";
+    const now = clashes(v, d.id, v[d.id]);
+    const c = document.getElementById("c-" + d.id);
+    c.hidden = !now.length;
+    c.textContent = now.length ? "Napięcie z: " + now.map(id => DIMS.find(x => x.id === id).name).join(", ") + ". Powód w karcie napięć." : "";
+  }
+
+  const questionMode = (!previewing && state.who === "now") ? "now" : "want";
+  for (const d of DIMS) document.getElementById("hb-" + d.id).innerHTML = renderQuestionHelp(d, questionMode, raw[d.id]);
+
+  const keys = previewing ? PRESETS[state.preview].keys : [];
+  // Zakres warunkowy: które pozycje suwaka utrzymują wybrany model przy obecnych ustawieniach reszty.
+  for (const d of DIMS) {
+    const row = document.getElementById("r-" + d.id);
+    row.hidden = !previewing;
+    if (!previewing) continue;
+    for (let p = 1; p <= 5; p++) {
+      const idx = shapeIdx({ ...v, [d.id]: p });
+      const seg = row.children[p - 1];
+      seg.className = idx === state.preview ? "in" : "out";
+      seg.title = d.labels[p - 1] + (idx === state.preview ? ": mieści się w modelu" : ": wyjście z modelu, powstaje „" + SHAPES[idx].name + "”");
+    }
+  }
+  const out = document.getElementById("preview-out");
+  const nowIdx = shapeIdx(v);
+  out.hidden = !previewing || nowIdx === state.preview;
+  if (!out.hidden) out.textContent = "Wyszedłeś poza ten model. Teraz to: " + SHAPES[nowIdx].name + ".";
+  for (const d of DIMS) document.getElementById("s-" + d.id).closest(".dim").classList.toggle("key", keys.includes(d.id));
+  const bar = document.getElementById("preview-bar");
+  bar.hidden = !previewing;
+  if (previewing) document.getElementById("preview-name").textContent = SHAPES[state.preview].name;
+
+  document.getElementById("order").innerHTML = ORDER.map(([id, text]) => {
+    const d = DIMS.find(x => x.id === id);
+    return `<li><b>${esc(d.name)}</b> <span class="pos">(${esc(d.labels[v[id] - 1])})</span><span class="recipe">Zawęża: ${esc(text)}</span></li>`;
+  }).join("");
+
+  document.getElementById("radar").innerHTML = radar();
+
+  const weave = pct(v, { czas: 1, mieszkanie: 1, finanse: 1, rodziny: 1, znajomi: 1 });
+  const exit = pct(v, { mieszkanie: 1, finanse: 1, slub: 1.5, dzieci: 2 });
+  const shape = SHAPES.find(s => s.test(v, weave));
+  document.getElementById("shape-name").textContent = shape.name;
+  document.getElementById("shape-desc").textContent = shape.desc + " (" + whoLabel + ")";
+  const answeredCount = countAnsweredScales(raw);
+  const incomplete = document.getElementById("incomplete");
+  incomplete.hidden = answeredCount === DIMS.length;
+  incomplete.textContent = `Odpowiedziano na ${answeredCount} z ${DIMS.length} skal. Brakujące są liczone jako pozycja środkowa, więc kształt, budżet i napięcia są orientacyjne.`;
+  document.getElementById("shapes").innerHTML = SHAPES.map((s, i) =>
+    `<li class="${s === shape ? "active" : ""}">${s === shape ? `<span class="pill now">Teraz</span>` : ""}<b>${esc(s.name)}</b>. ${esc(s.desc)}<span class="recipe">Powstaje, gdy: ${esc(s.recipe)}</span><button type="button" class="peek" data-shape="${i}">Podejrzyj typowe ustawienia</button></li>`
+  ).join("");
+
+  const editingMark = profileKey => (!previewing && state.who === profileKey) ? " (edytujesz)" : "";
+  document.getElementById("legend").innerHTML = previewing
+    ? `<span><i></i>Podgląd (edytujesz)</span><span><i class="ghost"></i>Moje ustawienia</span>`
+    : `<span><i></i>Jak chcę${editingMark("me")}</span>` +
+      (state.now ? `<span><i class="ghost"></i>Jak jest teraz${editingMark("now")}</span>` : "") +
+      (state.her ? `<span><i class="her"></i>Druga strona${editingMark("her")}</span>` : "");
+
+  document.getElementById("meters").innerHTML =
+    meter("Splecenie codzienności", weave, "Czas, mieszkanie, finanse, rodziny, znajomi") +
+    meter("Trudność odwrotu", exit, "Mieszkanie, finanse, ślub, dzieci. Im wyżej, tym bardziej warto decydować wprost.");
+
+  renderBudget(v, whoLabel);
+
+  const drift = document.getElementById("drift");
+  const answeredNow = state.now ? countAnsweredScales(state.now) : 0;
+  if (!answeredNow) {
+    drift.innerHTML = `<p class="empty">Profil „Jak jest teraz” nie ma jeszcze odpowiedzi. Ustaw go, żeby zobaczyć, gdzie stan faktyczny rozjeżdża się z tym, czego chcesz. Różnice często pokazują wybory, które zapadły same.</p>`;
+  } else {
+    const rows = DIMS.filter(d => state.now[d.id] != null && state.me[d.id] != null)
+      .map(d => ({ d, diff: Math.abs(state.me[d.id] - state.now[d.id]) })).filter(r => r.diff > 0).sort((a, b) => b.diff - a.diff);
+    const missingNow = DIMS.length - answeredNow;
+    drift.innerHTML = (rows.length
+      ? `<ul class="flat">` + rows.map(({ d, diff }) =>
+          `<li><span class="pill ${diff >= 2 ? "talk" : ""}">${diff >= 2 ? "Duża różnica" : "Mała różnica"}</span><b>${esc(d.name)}</b>: jest „${esc(d.labels[state.now[d.id] - 1])}”, chcesz „${esc(d.labels[state.me[d.id] - 1])}”.<span class="recipe">${esc(OWN[d.id][1])}. Czy obecny stan był wybrany, czy sam się ułożył?</span></li>`
+        ).join("") + `</ul>`
+      : `<p class="empty">${countAnsweredScales(state.me) ? "Na skalach z odpowiedzią stan faktyczny pokrywa się z tym, czego chcesz." : "Profil „Jak chcę” nie ma odpowiedzi, więc nie ma czego porównać."}</p>`)
+      + (missingNow ? `<p class="note" style="margin-top:10px">Bez odpowiedzi: ${missingNow} z ${DIMS.length} skal. Nie są porównywane.</p>` : "");
+  }
+
+  const answeredHer = state.her ? countAnsweredScales(state.her) : 0;
+  if (!answeredHer || !countAnsweredScales(state.me)) {
+    document.getElementById("gaps").innerHTML = `<p class="empty">Na razie widać tylko twój profil. Gdy druga strona ustawi swój, tutaj pojawi się lista tematów do rozmowy.</p>`;
+  } else {
+    const rows = DIMS.filter(d => state.her[d.id] != null && state.me[d.id] != null)
+      .map(d => ({ d, diff: Math.abs(state.me[d.id] - state.her[d.id]) })).sort((a, b) => b.diff - a.diff);
+    const missingHer = DIMS.length - answeredHer;
+    document.getElementById("gaps").innerHTML = `<ul class="flat">` + rows.map(({ d, diff }) => {
+      const struct = diff >= 2 && d.group === "A";
+      const pill = struct ? `<span class="pill struct">Różnica strukturalna</span>` : diff >= 2 ? `<span class="pill talk">Do rozmowy</span>` : diff === 1 ? `<span class="pill">Blisko</span>` : `<span class="pill">Zgodnie</span>`;
+      const extra = struct ? " Tu środek drogi zwykle nie istnieje. Potrzebna jest rozmowa o tym, co każde z was naprawdę chce." : "";
+      return `<li>${pill}<b>${esc(d.name)}</b>: ty „${esc(d.labels[state.me[d.id] - 1])}”, druga strona „${esc(d.labels[state.her[d.id] - 1])}”.${extra}</li>`;
+    }).join("") + `</ul>` + (missingHer ? `<p class="note" style="margin-top:10px">Bez odpowiedzi drugiej strony: ${missingHer} z ${DIMS.length} skal. Nie są porównywane.</p>` : "");
+  }
+
+  const hits = TENSIONS.filter(([test]) => test(v)).map(([, text]) => text);
+  document.getElementById("tensions").innerHTML = hits.length
+    ? `<ul class="flat">` + hits.map(t => `<li class="tension">${esc(t)}</li>`).join("") + `</ul>`
+    : `<p class="empty">W tym ustawieniu suwaki nie ciągną wyraźnie w przeciwne strony.</p>`;
+
+  document.getElementById("bill-title").textContent = "Rachunek tej konfiguracji (" + whoLabel.toLowerCase() + ")";
+  document.getElementById("bill").innerHTML = DIMS.map(d => {
+    const b = band(d, v[d.id]);
+    return `<tr><td><b>${esc(d.name)}</b><span class="pos">${esc(d.labels[v[d.id] - 1])}</span></td>
+      <td data-k="Zyskujesz">${esc(b[0])}</td><td data-k="Kosztem">${esc(b[1])}</td><td data-k="Warunek">${esc(b[2])}</td></tr>`;
+  }).join("");
+}
+
+// Szacunkowe godziny tygodniowo dla pozycji suwaka 1..5.
+const HOURS = {
+  praca:   [55, 48, 42, 38, 32],
+  czas:    [6, 12, 20, 30, 42],
+  rodziny: [1, 2, 4, 7, 10],
+  znajomi: [8, 6, 4, 2, 1],   // osobne kręgi kosztują osobne godziny; wspólny krąg mieści się w czasie razem
+  styl:    [0, 1, 3, 6, 10]
+};
+
+function budget(v) {
+  const items = [
+    ["Sen", 56, "#6b7a8f"],
+    ["Codzienność", 21, "#9aa5b1"],
+    ["Praca", HOURS.praca[v.praca - 1], "#c2853d"],
+    ["Czas razem", HOURS.czas[v.czas - 1], "var(--me)"],
+    ["Rodziny", HOURS.rodziny[v.rodziny - 1], "#7d9a4e"],
+    ["Własne kręgi znajomych", HOURS.znajomi[v.znajomi - 1], "#b56576"],
+    ["Nowości i wyjazdy", HOURS.styl[v.styl - 1], "#4d8fc4"]
+  ];
+  if (v.dzieci >= 4) items.push(["Opieka nad małym dzieckiem", 30, "var(--her)"]);
+  const used = items.reduce((s, x) => s + x[1], 0);
+  return { items, used, free: 168 - used };
+}
+
+function renderBudget(v, whoLabel) {
+  const { items, used, free } = budget(v);
+  const scale = Math.max(168, used);
+  const verdict = document.getElementById("budget-verdict");
+  verdict.className = "budget-verdict" + (free < 10 ? " over" : "");
+  verdict.textContent = free < 0
+    ? `Brakuje ${-free} godzin. Ta konfiguracja nie mieści się w tygodniu, więc coś ustąpi w praktyce.`
+    : free < 10
+      ? `Zostaje ${free} godzin tylko dla ciebie. To za mało na regenerację, sport i własne pasje.`
+      : `Zostaje ${free} godzin tylko dla ciebie: regeneracja, sport, własne pasje.`;
+  document.getElementById("budget-title").textContent = "Budżet tygodnia, 168 godzin (" + whoLabel.toLowerCase() + ")";
+  document.getElementById("budget-bar").innerHTML =
+    items.map(([n, h, c]) => `<div title="${esc(n)}: ${h} h" style="width:${h / scale * 100}%;background:${c}"></div>`).join("") +
+    (free > 0 ? `<div class="free" title="Dla ciebie: ${free} h" style="width:${free / scale * 100}%"></div>` : "") +
+    (free < 0 ? `<div class="limit" title="Granica 168 h" style="left:${168 / scale * 100}%"></div>` : "");
+  document.getElementById("budget-list").innerHTML =
+    items.map(([n, h, c]) => `<li><i style="background:${c}"></i><span>${esc(n)}</span><b>${h} h</b></li>`).join("") +
+    `<li><i class="free" style="background:repeating-linear-gradient(135deg, var(--surface) 0 3px, var(--line) 3px 5px)"></i><span>Dla ciebie</span><b>${free} h</b></li>`;
+}
+
+function shapeIdx(vals) {
+  const w = pct(vals, { czas: 1, mieszkanie: 1, finanse: 1, rodziny: 1, znajomi: 1 });
+  return SHAPES.findIndex(s => s.test(vals, w));
+}
+
+function meter(name, value, sub) {
+  return `<div class="meter"><div class="meter-head"><b>${esc(name)}</b><span>${value} / 100</span></div>
+    <div class="bar"><div style="width:${value}%"></div></div><small>${esc(sub)}</small></div>`;
+}
+
+buildPanel();
+document.getElementById("who-me").addEventListener("click", () => setWho("me"));
+document.getElementById("who-now").addEventListener("click", () => setWho("now"));
+document.getElementById("who-her").addEventListener("click", () => setWho("her"));
+document.getElementById("shapes").addEventListener("click", e => {
+  const b = e.target.closest(".peek");
+  if (b) startPreview(Number(b.dataset.shape));
+});
+document.getElementById("preview-stop").addEventListener("click", stopPreview);
+document.getElementById("dims").addEventListener("click", e => {
+  const confirmButton = e.target.closest(".confirm");
+  if (confirmButton) { current()[confirmButton.dataset.dim] = MIDDLE_POSITION; save(); render(); return; }
+  const answerButton = e.target.closest(".answer");
+  if (!answerButton) return;
+  current()[answerButton.dataset.dim] = Number(answerButton.dataset.position);
+  save(); render();
+});
+requireSecondClick(document.getElementById("reset-active"), resetActiveProfile);
+requireSecondClick(document.getElementById("reset-all"), resetAllProfiles);
+const radarContainer = document.getElementById("radar");
+radarContainer.addEventListener("click", e => {
+  const target = resolveRadarTarget(e);
+  if (target) applyRadarSelection(target);
+});
+radarContainer.addEventListener("pointermove", e => {
+  if (e.pointerType === "touch") return;
+  const target = resolveRadarTarget(e);
+  showRadarMarker(target);
+  document.getElementById("radar-hint").textContent = target ? describeRadarTarget(target) : RADAR_HINT_DEFAULT;
+});
+radarContainer.addEventListener("pointerleave", () => {
+  showRadarMarker(null);
+  document.getElementById("radar-hint").textContent = RADAR_HINT_DEFAULT;
+});
+render();
+</script>
+</body>
+</html>
