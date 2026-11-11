@@ -26,6 +26,12 @@ jakie są opcje, co każda daje, kosztem czego i jakiego warunku wymaga.
   `PRESETS.every((preset, index) => shapeIdx(Object.fromEntries(DIM_IDS.map((id, position) => [id, preset.vals[position]]))) === index)`
 - Czysty start: `localStorage.removeItem("ksztalt-zwiazku")` i odświeżenie strony.
 
+## Publikacja
+- GitHub Pages z gałęzi `main`, katalog główny: https://jerzyplocha.github.io/ksztalt-zwiazku/
+- Każdy push na `main` publikuje stronę w około minutę. Repo jest publiczne.
+- Commity tylko z adresem noreply GitHuba (ustawionym lokalnie w tym repo). `logs/` i `.idea/` są ignorowane.
+- Strona ma `noindex`. Google Fonts zostają ładowane z Google: to decyzja autora.
+
 ## Architektura
 Jeden `<script>` na końcu index.html, bez zależności i bez budowania (z zewnątrz tylko Google Fonts).
 Układ pliku: CSS, szkielet HTML z pustymi kontenerami po id, bloki danych, funkcje, podpięcie zdarzeń.
